@@ -25,6 +25,7 @@ class DWDData:
     Condition = None
     Pressure = None
     DewPoint = None
+    Condition = None
 
 # RMParser.dataType.TEMPERATURE
 # RMParser.dataType.MINTEMP
@@ -46,6 +47,9 @@ def temperatureTransformation(value):
 
 def pressureTransformation(value):
     return value / 1000
+
+def skyCoverTransform(value):
+    return value / 100
 
 def yesterday(timeStamp):
     return timeStamp - (24 * 60 * 60)
@@ -71,6 +75,51 @@ def parseFloats(rawValues, timeStamps, transform = None, timeTransform = None):
         floatList.append(tuple)
         i += 1
     return floatList
+
+
+def conditionParser(dwdValue):
+    if dwdValue == 95:
+        return RMParser.conditionType.Thunderstorm
+    if dwdValue == 57:
+        return RMParser.conditionType.HeavyFreezingRain
+    if dwdValue == 56:
+        return RMParser.conditionType.FreezingRain
+    if dwdValue == 67:
+        return RMParser.conditionType.RainIce
+    if dwdValue == 66:
+        return RMParser.conditionType.RainIce
+    if dwdValue == 86 or dwdValue == 85:
+        return RMParser.conditionType.Snow
+    if dwdValue == 84 or dwdValue == 83:
+        return RMParser.conditionType.RainShowers
+    if dwdValue == 82:
+        return RMParser.conditionType.HeavyRain
+    if dwdValue == 81:
+        return RMParser.conditionType.RainShowers
+    if dwdValue == 80:
+        return RMParser.conditionType.LightRain
+    if dwdValue == 75 or dwdValue == 73 or dwdValue == 72 or dwdValue == 71:
+        return RMParser.conditionType.Snow
+    if dwdValue == 69 or dwdValue == 68:
+        return RMParser.conditionType.RainSnow
+    if dwdValue == 55 or dwdValue == 65:
+        return RMParser.conditionType.HeavyRain
+    if dwdValue == 53 or dwdValue == 63:
+        return RMParser.conditionType.RainShowers
+    if dwdValue == 51 or dwdValue == 61:
+        return RMParser.conditionType.LightRain
+    if dwdValue == 49 or dwdValue == 45:
+        return RMParser.conditionType.Fog
+    if dwdValue == 3:
+        return RMParser.conditionType.Overcast
+    if dwdValue == 2:
+        return RMParser.conditionType.MostlyCloudy
+    if dwdValue == 1:
+        return RMParser.conditionType.FewClouds
+    if dwdValue == 0:
+        return RMParser.conditionType.Fair
+    return RMParser.conditionType.Unknown
+
 
 class DWDForecast(RMParser):
     parserName = "DWD Forecast Parser"  # Your parser name
@@ -179,7 +228,7 @@ class DWDForecast(RMParser):
                             continue
                         # Cloud
                         if v.lower() == "Neff".lower():
-                            parsedData.SkyCover = parseFloats(rawValues, timeStampList)
+                            parsedData.SkyCover = parseFloats(rawValues, timeStampList, skyCoverTransform)
                             continue
                         # QPF
                         if v.lower() == "RRdc".lower():
@@ -196,6 +245,10 @@ class DWDForecast(RMParser):
                         # Dewpoint
                         if v.lower() == "Td".lower():
                             parsedData.DewPoint = parseFloats(rawValues, timeStampList, temperatureTransformation)
+                            continue
+                        # Condition
+                        if v.lower() == "WPcd1".lower():
+                            parsedData.Condition = parseFloats(rawValues, timeStampList, conditionParser, yesterday)
                             continue
 
 
@@ -226,7 +279,7 @@ class DWDForecast(RMParser):
                 self.addValues(RMParser.dataType.QPF, parsedData.QPF)
             if parsedData.ET0 != None:
                 log.debug("Adding ET0 values")
-                self.addValues(RMParser.dataType.ET0, parsedData.ET0)
+                #self.addValues(RMParser.dataType.ET0, parsedData.ET0)
             if parsedData.POP != None:
                 log.debug("Adding POP values")
                 self.addValues(RMParser.dataType.POP, parsedData.POP)
@@ -236,6 +289,8 @@ class DWDForecast(RMParser):
             if parsedData.DewPoint != None:
                 log.debug("Adding DewPoint values")
                 self.addValues(RMParser.dataType.DEWPOINT, parsedData.DewPoint)
+            if parsedData.Condition != None:
+                self.addValues(RMParser.dataType.CONDITION, parsedData.Condition)
 
         except Exception, e:
             log.error("*** Error running DWD parser")
