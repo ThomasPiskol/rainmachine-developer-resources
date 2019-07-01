@@ -54,7 +54,7 @@ class DWDHistory(RMParser):
             log.debug("No station set, using (%s)" % station)
 
         #url = "https://opendata.dwd.de/climate/observations_germany/climate/hourly/precipitation/recent/stundenwerte_RR_" + str(station) + "_akt.zip"
-        url = "https://opendata.dwd.de/climate/observations_germany/climate/1_minute/precipitation/now/1minutenwerte_nieder_" + str(station) + "_now.zip"
+        url = "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/1_minute/precipitation/now/1minutenwerte_nieder_" + str(station) + "_now.zip"
 
 
         URLParams = [
