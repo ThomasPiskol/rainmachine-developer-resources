@@ -5,7 +5,7 @@ import json    # Your parser needed libraries
 import urllib2, StringIO, datetime, re
 import xml.etree.ElementTree as ET
 from zipfile import ZipFile
-from RMUtilsFramework.rmTimeUtils import rmTimestampFromDateAsString
+from RMUtilsFramework.rmTimeUtils import rmTimestampFromDateAsString, rmCurrentTimestamp
 
 
 
@@ -183,23 +183,34 @@ class DWDForecast(RMParser):
             timeStampsNode = rootNode.findall("./kml:Document/kml:ExtendedData/dwd:ProductDefinition/dwd:ForecastTimeSteps/", nameSpaces)
             extendedDataNode = rootNode.findall("./kml:Document/kml:Placemark/kml:ExtendedData/", nameSpaces)
 
+            nowTimeStamp = rmCurrentTimestamp()
+            skipColumens = 0
+
             # Parse Timestamps
             timeStampList = []
             for ts in timeStampsNode:
                 compatibleString = re.sub(r"\.\d+Z$", '', ts.text)
                 unix = rmTimestampFromDateAsString(compatibleString, "%Y-%m-%dT%H:%M:%S")
                 #ts = datetime.datetime.strptime(compatibleString, "%Y-%m-%dT%H:%M:%S")
+                if(unix < nowTimeStamp):
+                    skipColumens += 1
+                    continue
                 timeStampList.append(unix)
 
             dwdData = []
             parsedData = DWDData()
             for data in extendedDataNode:
+                currentCol = 0
                 for k,v in data.attrib.items():
                     if k.endswith("elementName"):
                         valueNode = data.find("./dwd:value", nameSpaces)
                         if valueNode == None:
                             continue
-                        rawValues = valueNode.text.split()
+                        allValues = valueNode.text.split()
+                        if skipColumens > 0:
+                            rawValues = allValues[skipColumens:]
+                        else:
+                            rawValues = allValues
                         if len(rawValues) != len(timeStampList):
                             continue
                         # Temperature
