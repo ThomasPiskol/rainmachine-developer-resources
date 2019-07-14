@@ -86,11 +86,6 @@ class DWDHistory(RMParser):
             lastHour = None
             currentHour = None
             totalHour = 0
-
-            currentDay = None
-            lastDay = None
-            totalDay = 0
-
             for row in reader:
                 timeStamp = row[1]
                 #log.debug("Timestamp: %s" % timeStamp)
@@ -107,23 +102,16 @@ class DWDHistory(RMParser):
                 if value == None:
                     continue
 
-                #currentHour = myEpoch - (myEpoch % 3600)
-                #if currentHour != lastHour:
-                #    if lastHour != None:
-                #        # log.debug("Adding value %s" % value)
-                #        self.addValue(RMParser.dataType.RAIN, lastHour, totalHour)
-                #    totalHour = value
-                #    lastHour = currentHour
-                #else:
-                #    totalHour += value
-                currentDay = myEpoch - (myEpoch % 86400)
-                if currentDay != lastDay:
-                    if lastDay != None:
-                        self.addValue(RMParser.dataType.RAIN, lastDay, totalDay)
-                    totalDay += value
-                    lastDay = currentDay
+                currentHour = myEpoch - (myEpoch % 3600)
+                if currentHour != lastHour:
+                    if lastHour != None:
+                        # log.debug("Adding value %s" % value)
+                        self.addValue(RMParser.dataType.RAIN, lastHour, totalHour)
+                    totalHour = value
+                    lastHour = currentHour
                 else:
-                    totalDay += value
+                    totalHour += value
+
 
             log.info("Done")
 
